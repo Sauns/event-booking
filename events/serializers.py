@@ -1,8 +1,29 @@
 from rest_framework import serializers
-from .models import Event
+from .models import Event, TicketType
 
+class EventListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = [
+            "id",
+            "title",
+            "start_datetime",
+            "organizer",
+        ]
 
-class EventSerializer(serializers.ModelSerializer):
+class TicketTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketType
+        fields = [
+            "id",
+            "name",
+            "price",
+            "quantity_available",
+        ]
+
+class EventDetailSerializer(serializers.ModelSerializer):
+    ticket_types = TicketTypeSerializer(many=True, read_only=True)
+
     class Meta:
         model = Event
         fields = [
@@ -13,6 +34,5 @@ class EventSerializer(serializers.ModelSerializer):
             "start_datetime",
             "end_datetime",
             "organizer",
-            "is_active",
-            "created_at",
+            "ticket_types",
         ]
