@@ -46,16 +46,15 @@ class TicketType(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ("event", "price")
         constraints = [
             models.UniqueConstraint(
                 fields=["event", "name"],
                 name="unique_ticket_type_name_per_event",
             ),
-        ]
-        indexes = [
-            models.Index(fields=["event", "is_active"]),
-            models.Index(fields=["sales_start", "sales_end"]),
+            models.CheckConstraint(
+                condition=models.Q(quantity_available__lte=models.F("quantity_total")),
+                name="available_lte_total",
+            ),
         ]
 
     def __str__(self) -> str:
