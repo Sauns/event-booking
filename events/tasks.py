@@ -12,7 +12,7 @@ def expire_booking_task(booking_id):
         except Booking.DoesNotExist:
             return
 
-        if booking.status != "pending":
+        if booking.status != Booking.Status.PENDING:
             return
 
         ticket_type = booking.ticket_type
@@ -20,5 +20,6 @@ def expire_booking_task(booking_id):
         ticket_type.quantity_available += booking.quantity
         ticket_type.save()
 
-        booking.status = "expired"
-        booking.save()
+        booking.status = Booking.Status.EXPIRED
+        booking.expire_task_id = None
+        booking.save(update_fields=["status", "expire_task_id"])

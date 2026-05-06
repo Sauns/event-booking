@@ -29,13 +29,15 @@ class BookingService:
                 ticket_type=ticket_type,
                 quantity=quantity,
                 total_amount=total_amount,
-                status="pending",
+                status=Booking.Status.PENDING,
             )
 
-            expire_booking_task.apply_async(
+            task = expire_booking_task.apply_async(
                 args=[booking.id],
                 countdown=900
             )
+            booking.expire_task_id = task.id
+            booking.save(update_fields=["expire_task_id"])
 
             ticket_type.quantity_available -= quantity
             ticket_type.save()

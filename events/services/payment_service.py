@@ -1,5 +1,7 @@
 from django.db import transaction
-from events.models import Booking
+from django.utils import timezone
+from events.models import Booking, Payment
+from events.tasks import expire_booking_task
 
 
 class PaymentService:
@@ -23,7 +25,20 @@ class PaymentService:
             if booking.status != Booking.Status.PENDING:
                 raise ValueError("Booking is not available for payment")
 
+            Payment.objects.create(
+                booking=booking,
+                amount=booking.total_amount,
+                status=Payment.Status.PAID,
+                provider=Payment.Provider.STRIPE,
+                provider_payment_id=f"fake-{booking.id}",
+                paid_at=timezone.now(),
+            )
+
+            if booking.expire_task_id:
+                expire_booking_task.AsyncResult(booking.expire_task_id).revoke()
+                booking.expire_task_id = None
+
             booking.status = Booking.Status.CONFIRMED
-            booking.save()
+            booking.save(update_fields=["status", "expire_task_id"])
 
             return booking
